@@ -9,4 +9,17 @@ __pycache__/
 .env
 
 # Logs
-*.log
+*.log# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Virtual environment
+venv/
+
+# OS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
