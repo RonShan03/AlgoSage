@@ -30,6 +30,32 @@
       color: #555;
       white-space: pre-line;
     }
+    /* New styles for the upload section */
+    .upload-section {
+      margin-top: 40px;
+      padding: 20px;
+      border: 2px dashed #ccc;
+      border-radius: 10px;
+      text-align: center;
+    }
+    .upload-section h2 {
+      color: #555;
+    }
+    #file-upload-form {
+      margin-top: 20px;
+    }
+    #file-upload-form input[type="file"] {
+      display: block;
+      margin: 10px auto;
+    }
+    #file-upload-form button {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      cursor: pointer;
+      border-radius: 5px;
+    }
   </style>
 </head>
 <body>
@@ -46,31 +72,78 @@
 
   <div id="selection-output"></div>
 
+  <div class="upload-section">
+    <h2>Upload your teacher's notes</h2>
+    <form id="file-upload-form" enctype="multipart/form-data">
+      <input type="file" id="file-input" name="file" accept=".pdf,.ppt,.pptx,.doc,.docx" />
+      <button type="submit">Upload</button>
+    </form>
+    <div id="upload-status"></div>
+  </div>
+  
   <script>
-  const buttons = document.querySelectorAll('#buttons-container button');
-  const output = document.getElementById('selection-output');
+    const buttons = document.querySelectorAll('#buttons-container button');
+    const output = document.getElementById('selection-output');
+    const fileUploadForm = document.getElementById('file-upload-form');
+    const uploadStatus = document.getElementById('upload-status');
 
-  buttons.forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const topic = btn.getAttribute('data-topic');
-      output.textContent = `You selected: ${topic}`;
+    buttons.forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const topic = btn.getAttribute('data-topic');
+        output.textContent = `You selected: ${topic}`;
 
+        try {
+          // This call remains the same, but you should use the geminiApiUrl from your backend
+          const res = await fetch('/select-topic', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ topic })
+          });
+
+          const data = await res.json();
+          output.textContent += `\n${data.message}`;
+        } catch (err) {
+          console.error(err);
+          output.textContent += `\nCould not contact server.`;
+        }
+      });
+    });
+
+    // New JavaScript for file upload
+    fileUploadForm.addEventListener('submit', async (e) => {
+      e.preventDefault(); // Prevent the form from submitting in the traditional way
+      
+      const fileInput = document.getElementById('file-input');
+      const file = fileInput.files[0];
+
+      if (!file) {
+        uploadStatus.textContent = "Please select a file to upload.";
+        return;
+      }
+      
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      uploadStatus.textContent = "Uploading...";
+      
       try {
-        const res = await fetch('/select-topic', {  // relative path
+        const res = await fetch('/upload-file', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ topic })
+          body: formData,
         });
-
+        
         const data = await res.json();
-        output.textContent += `\n${data.message}`;
+        
+        if (res.ok) {
+          uploadStatus.textContent = `Upload successful! Server message: ${data.message}`;
+        } else {
+          uploadStatus.textContent = `Upload failed: ${data.error}`;
+        }
       } catch (err) {
         console.error(err);
-        output.textContent += `\nCould not contact server.`;
+        uploadStatus.textContent = "An error occurred during upload. Please try again.";
       }
     });
-  });
-</script>
-
+  </script>
 </body>
 </html>

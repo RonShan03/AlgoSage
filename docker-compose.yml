@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+    ports:
+      - "3000:3000"
+    networks:
+      - algosage-network
+    # Add any environment variables your backend needs to connect to the other services
+    environment:
+      - GEMINI_API_URL=http://gemini-explanation:5000
+      - USER_UPLOAD_API_URL=http://user-upload:5001
+
+  gemini-explanation:
+    build:
+      context: ./services/gemini-explanation
+    ports:
+      - "5000:5000"
+    networks:
+      - algosage-network
+
+  user-upload:
+    build:
+      context: ./services/user-upload
+    ports:
+      - "5001:5001"
+    networks:
+      - algosage-network
+
+networks:
+  algosage-network:
+    driver: bridge
